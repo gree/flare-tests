@@ -1,0 +1,27 @@
+Name:           flare-tests
+Version:        0.0.1
+Description:    Flare system test suite
+License:        MIT
+Author:         Benjamin Surma <benjamin.surma@gree.net>
+Maintainer:     Benjamin Surma <benjamin.surma@gree.net>
+Build-Type:     Simple
+Cabal-Version:  >=1.9.2
+
+Executable flare-tests
+  Build-Depends:   base >=4 && <5
+                 , cereal
+                 , directory
+                 , filepath
+                 , random
+                 , time
+                 , HUnit
+                 , QuickCheck >= 2.5
+                 , test-framework >= 0.8
+                 , test-framework-sandbox
+                 , test-sandbox
+                 , test-sandbox-hunit
+                 , test-sandbox-quickcheck
+  Hs-Source-Dirs:  src
+  Main-Is:         Main.hs
+  Extensions:      DeriveDataTypeable
+  Other-Modules:   Paths_flare_tests
