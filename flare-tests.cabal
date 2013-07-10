@@ -21,6 +21,8 @@ Executable flare-tests
                  , test-sandbox
                  , test-sandbox-hunit
                  , test-sandbox-quickcheck
+                 , unix
+                 , split
   Hs-Source-Dirs:  src
   Main-Is:         Main.hs
   Extensions:      DeriveDataTypeable

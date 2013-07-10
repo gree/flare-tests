@@ -2,8 +2,8 @@
 
 import Test.Framework
 import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup', yieldProgress)
-import Test.Sandbox (Sandbox, liftIO, getVariable, silently, stop)
-import Test.Sandbox.HUnit (assertBool, assertEqual, assertException)
+import Test.Sandbox (Sandbox, liftIO, getVariable, silently, stop, signal)
+import Test.Sandbox.HUnit (assertBool, assertEqual, assertException, assertFailure)
 import Test.Sandbox.QuickCheck
 import Test.QuickCheck (suchThat)
 import Test.QuickCheck.Arbitrary
@@ -16,17 +16,57 @@ import Data.Char
 import Data.Time.Clock.POSIX
 import GHC.Conc
 import Text.Printf
+import System.Posix.Signals
+import Data.List.Split
 
 main :: IO ()
 main = do
+  defaultMain [ failoverTests, protocolTests ]
+
+failoverTests = testGroup "failover" $ take 10 $ repeat failoverTests'
+
+failoverTests' = do
   let
-    (~=>) :: String -> String -> Sandbox ()
-    i ~=> o = void $ assertSendToDaemon i o
-    maxInt32 :: Integer
-    maxInt32 = 2^(32 :: Integer)
-    maxInt64 :: Integer
-    maxInt64 = 2^(64 :: Integer)
-  defaultMain [ sandboxTests "flare" $ setup >> sandboxTestGroup "all" [
+      (~=>) :: String -> String -> Sandbox ()
+      i ~=> o = void $ assertSendToDaemon i o
+      numOfActiveNodes resp = (length $ filter (\x -> "active" `elem` splitOn " " x) $ splitOn "\r\n" resp)
+      check = withTimeout 1000 $ do
+        resp <- sendTo "flarei" "stats nodes\r\n"
+        when (resp == "") $ assertFailure "flarei does not respond"
+  sandboxTests "monitor_failover" $ setup >> sandboxTestGroup "all" [
+      sandboxTest "1. flared setup" setupFlareCluster
+    , sandboxTest "2. stop" $ signal "flarei" sigSTOP
+    , sandboxTest "3. kill" $ mapM_ (flip signal sigKILL) [ "0_Master", "0_Slave_1" ]
+    , sandboxTest "4. wait 100ms" $ liftIO $ threadDelay (100000)
+    , sandboxTest "5. cont" $ signal "flarei" sigCONT
+    , sandboxTest "6. wait" $ liftIO $ threadDelay (6*1000000)
+    , sandboxTest "7. ping" $ assertSendTo "flarei" "ping\r\n" "OK\r\n"
+    , sandboxTest "8. check" $ check
+    , sandboxTest "9. stop" $ signal "flarei" sigSTOP
+    , sandboxTest "10. kill" $ mapM_ (flip signal sigKILL) [ "1_Master", "1_Slave_1" ]
+    , sandboxTest "11. wait 100ms" $ liftIO $ threadDelay (100000)
+    , sandboxTest "12. cont" $ signal "flarei" sigCONT
+    , sandboxTest "13. wait" $ liftIO $ threadDelay (6*1000000)
+    , sandboxTest "14. ping" $ assertSendTo "flarei" "ping\r\n" "OK\r\n"
+    , sandboxTest "15. check" $ check
+    , sandboxTest "16. stop" $ signal "flarei" sigSTOP
+    , sandboxTest "17. kill" $ mapM_ (flip signal sigKILL) [ "2_Slave_1", "2_Master" ]
+    , sandboxTest "18. wait 100ms" $ liftIO $ threadDelay (100000)
+    , sandboxTest "19. cont" $ signal "flarei" sigCONT
+    , sandboxTest "20. wait" $ liftIO $ threadDelay (8*1000000)
+    , sandboxTest "21. ping" $ assertSendTo "flarei" "ping\r\n" "OK\r\n"
+    , sandboxTest "22. check" $ check
+    ]
+
+protocolTests = do
+  let
+      (~=>) :: String -> String -> Sandbox ()
+      i ~=> o = void $ assertSendToDaemon i o
+      maxInt32 :: Integer
+      maxInt32 = 2^(32 :: Integer)
+      maxInt64 :: Integer
+      maxInt64 = 2^(64 :: Integer)
+  sandboxTests "flare" $ setup >> sandboxTestGroup "all" [
       sandboxTestGroup "Pre-initialization tests" [
         sandboxTest "ping" $ "ping\r\n" ~=> "OK\r\n"
       , sandboxTest "empty" $ "\r\n" ~=> "ERROR\r\n"
@@ -212,4 +252,4 @@ main = do
                                               assertEqual "pong" "OK\r\n" =<< sendTo "flarei" "ping\r\n"
         ]
       ]
-    ] ]
+    ]
