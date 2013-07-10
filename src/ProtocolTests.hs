@@ -4,25 +4,18 @@ module ProtocolTests (protocolTests) where
 
 import Test.Framework
 import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup')
-import Test.Sandbox (Sandbox, liftIO, getVariable)
-import Test.Sandbox.HUnit (assertBool, assertEqual, assertException)
-import Test.Sandbox.QuickCheck
-import Test.QuickCheck (suchThat)
-import Test.QuickCheck.Arbitrary
-import Test.QuickCheck.Monadic
+import Test.Sandbox (Sandbox, liftIO)
+import Test.Sandbox.HUnit (assertEqual, assertException)
 
 import Main.Internals
 
 import Control.Monad
-import Data.Char
 import Data.Time.Clock.POSIX
 import GHC.Conc
-import Text.Printf
 
 protocolTests :: Test
 protocolTests = sandboxTests "flare" $ setup >> sandboxTestGroup "protocol tests" [
     preInitializationTests
-  -- Initialize the first partition
   , sandboxTest "flared setup" setupFlareCluster
   , sandboxTestGroup "storage tests" [
       basicGetSetTests
@@ -31,25 +24,6 @@ protocolTests = sandboxTests "flare" $ setup >> sandboxTestGroup "protocol tests
     , memcachedIncrDecrTests
     , memcachedNoreplyTests
     , memcachedTouchTests
-    ]
-  , sandboxTestGroup "properties" [
-      sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
-                                               v <- pick arbitrary :: PropertyM Sandbox String
-                                               void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%s\r\n" k (length v) v) "STORED\r\n"
-                                               void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
-    , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
-                                                x <- pick $ arbitrary `suchThat` (>= 0) :: PropertyM Sandbox Int
-                                                y <- pick $ arbitrary `suchThat` (> 0) :: PropertyM Sandbox Int
-                                                void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%d\r\n" k (length $ show x) x) "STORED\r\n"
-                                                void $ run $ assertSendToDaemon (printf "incr %s %d\r\n" k y) (printf "%d\r\n" (x + y))
-    ]
-  , sandboxTestGroup "partitioning" [
-      sandboxTest "repartition" $ do daemons <- getVariable "daemons" [] :: Sandbox [FlareDaemon]
-                                     items <- mapM (liftM read . getStat "curr_items" :: FlareDaemon -> Sandbox Int) daemons
-                                     let avg = fromIntegral (sum items) / fromIntegral (length items) :: Double
-                                         dev = max (fromIntegral (maximum items) - avg) (avg - fromIntegral (minimum items)) / avg
-                                     liftIO . putStrLn $ show items ++ " => Deviation: " ++ show dev
-                                     assertBool "deviation too large" (dev < 0.3)
     ]
   ]
 
