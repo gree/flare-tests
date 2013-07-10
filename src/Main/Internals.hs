@@ -119,7 +119,7 @@ setupFlareDaemon fd = do
   let hpId = "localhost " ++ show port
   case fdRole fd of
     Master -> void $ assertSendTo "flarei" ("node role " ++ hpId ++ " master 1 " ++ show (fdPartition fd) ++ "\r\n") "OK\r\n"
-    Slave _ -> void $ assertSendTo "flarei" ("node role " ++ hpId ++ " slave 1 " ++ show (fdPartition fd) ++ "\r\n") "OK\r\n"
+    Slave sidx -> void $ assertSendTo "flarei" ("node role " ++ hpId ++ " slave " ++ show sidx ++ " " ++ show (fdPartition fd) ++ "\r\n") "OK\r\n"
   void $ assertSendTo "flarei" ("node state " ++ hpId ++ " active\r\n") "OK\r\n"
 
 setupFlareCluster :: Sandbox ()
