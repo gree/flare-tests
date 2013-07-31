@@ -88,7 +88,7 @@ withTimeout = withVariable "timeout"
 
 sendTo :: String -> String -> Sandbox String
 sendTo program input = do
-  timeout <- getVariable "timeout" 50
+  timeout <- getVariable "timeout" 250
   Test.Sandbox.sendTo program input timeout
 
 sendToDaemon :: String -> Sandbox String
