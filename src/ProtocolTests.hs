@@ -17,7 +17,7 @@ protocolTests :: Test
 protocolTests = sandboxTests "flare" $ setup >> sandboxTestGroup "protocol tests" [
     preInitializationTests
   , sandboxTest "flared setup" setupFlareCluster
-  , sandboxTestGroup "storage tests" [
+  , sandboxTestGroup "storage" [
       basicGetSetTests
     , memcachedGetSetTests
     , memcachedExpirationTests
