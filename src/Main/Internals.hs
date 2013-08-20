@@ -62,8 +62,8 @@ instance Serialize FlareDaemon
 
 fdId :: FlareDaemon -> String
 fdId fd = case fdRole fd of
-  Master -> show (fdPartition fd) ++ "_Master"
-  Slave i -> show (fdPartition fd) ++ "_Slave_" ++ show i
+  Master -> "Partition_" ++ show (fdPartition fd) ++ "_Master"
+  Slave i -> "Partition_" ++ show (fdPartition fd) ++ "_Slave_" ++ show i
 
 registerDaemon :: FlareDaemon -> Sandbox ()
 registerDaemon fd = do
