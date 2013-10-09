@@ -29,7 +29,7 @@ properties = sandboxTests "flare" $ do
                                                  void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
       , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
                                                   x <- pick $ arbitrary `suchThat` (>= 0) :: PropertyM Sandbox Int
-                                                  y <- pick $ arbitrary `suchThat` (> 0) :: PropertyM Sandbox Int
+                                                  y <- pick $ arbitrary `suchThat` (\v -> x + v > x) :: PropertyM Sandbox Int
                                                   void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%d\r\n" k (length $ show x) x) "STORED\r\n"
                                                   void $ run $ assertSendToDaemon (printf "incr %s %d\r\n" k y) (printf "%d\r\n" (x + y))
       ]
