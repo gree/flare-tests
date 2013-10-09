@@ -190,7 +190,7 @@ memcachedTouchTests :: Sandbox Test
 memcachedTouchTests = sandboxTestGroup' "memcached touch tests"
     (do version <- sendToDaemon "version\r\n"
         return $ "VERSION flare-1.0.16\r\n" /= version) [
-    sandboxTest "1. set" $ "set mt:key 0 1 5\r\nvalue\r\n" ~=> "STORED\r\n"
+    sandboxTest "1. set" $ "set mt:key 0 2 5\r\nvalue\r\n" ~=> "STORED\r\n"
   , sandboxTest "2. touch" $ "touch mt:key 10\r\n" ~=> "TOUCHED\r\n"
-  , sandboxTest "3. wait 2s" $ liftIO $ threadDelay 2000000
+  , sandboxTest "3. wait 3s" $ liftIO $ threadDelay 3000000
   , sandboxTest "4. get" $ "get mt:key\r\n" ~=> "VALUE mt:key 0 5\r\nvalue\r\nEND\r\n" ]
