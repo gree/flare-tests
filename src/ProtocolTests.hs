@@ -14,8 +14,9 @@ import Data.Time.Clock.POSIX
 import GHC.Conc
 
 protocolTests :: Test
-protocolTests = sandboxTests "flare" $ setup >> sandboxTestGroup "protocol tests" [
-    preInitializationTests
+protocolTests = sandboxTests "protocol" [
+    sandboxTest "setup" setup
+  , preInitializationTests
   , sandboxTest "flared setup" setupFlareCluster
   , sandboxTestGroup "storage" [
       basicGetSetTests
@@ -94,17 +95,20 @@ memcachedGetSetTests = sandboxTestGroup "memcached get/set tests" [
   , sandboxTest "8. replace key_z (should fail)" $ "replace mgs:key_z 0 0 7\r\nvalue_z\r\n" ~=> "NOT_STORED\r\n"
   , sandboxTest "9. delete key_a" $ "delete mgs:key_a\r\n" ~=> "DELETED\r\n"
   , sandboxTest "10. delete key_a again (should fail)" $ "delete mgs:key_a\r\n" ~=> "NOT_FOUND\r\n"
-  , sandboxTest "11. add key_c" $ "add mgs:key_c 0 0 7\r\nvalue_c\r\n" ~=> "STORED\r\n"
-  , sandboxTest "12. get key_c" $ "get mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 7\r\nvalue_c\r\nEND\r\n"
-  , sandboxTest "13. cas key_c (should fail)" $ "cas mgs:key_c 0 0 10 0\r\nvalue_c_v2\r\n" ~=> "EXISTS\r\n"
-  , sandboxTest "14. gets key_c" $ "gets mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 7 1\r\nvalue_c\r\nEND\r\n"
-  , sandboxTest "15. cas key_c" $ "cas mgs:key_c 0 0 10 1\r\nvalue_c_v3\r\n" ~=> "STORED\r\n"
-  , sandboxTest "16. get key_c" $ "get mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 10\r\nvalue_c_v3\r\nEND\r\n"
-  , sandboxTest "17. pipelining" $ "set mgs:key_a 0 0 7\r\nvalue_a\r\ndelete mgs:key_a\r\nset mgs:key_a 0 0 7\r\nvalue_b\r\ndelete mgs:key_a\r\n"
+  , sandboxTest "11. get key_a (deleted)" $ "get mgs:key_a\r\n" ~=> "END\r\n"
+  , sandboxTest "12. add key_c" $ "add mgs:key_c 0 0 7\r\nvalue_c\r\n" ~=> "STORED\r\n"
+  , sandboxTest "13. get key_c" $ "get mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 7\r\nvalue_c\r\nEND\r\n"
+  , sandboxTest "14. cas key_c (should fail)" $ "cas mgs:key_c 0 0 10 0\r\nvalue_c_v2\r\n" ~=> "EXISTS\r\n"
+  , sandboxTest "15. gets key_c" $ "gets mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 7 1\r\nvalue_c\r\nEND\r\n"
+  , sandboxTest "16. cas key_c" $ "cas mgs:key_c 0 0 10 1\r\nvalue_c_v3\r\n" ~=> "STORED\r\n"
+  , sandboxTest "17. get key_c" $ "get mgs:key_c\r\n" ~=> "VALUE mgs:key_c 0 10\r\nvalue_c_v3\r\nEND\r\n"
+  , sandboxTest "18. pipelining" $ "set mgs:key_a 0 0 7\r\nvalue_a\r\ndelete mgs:key_a\r\nadd mgs:key_a 0 0 7\r\nvalue_b\r\ndelete mgs:key_a\r\nadd mgs:key_a 0 0 7\r\nvalue_c\r\n"
                                    ~=> "STORED\r\n\
                                        \DELETED\r\n\
                                        \STORED\r\n\
-                                       \DELETED\r\n" ]
+                                       \DELETED\r\n\
+                                       \STORED\r\n"
+  , sandboxTest "19. check" $ "get mgs:key_a" ~=> "VALUE mgs:key_a 0 0 7\r\nvalue_c\r\n" ]
 
 -- https://github.com/memcached/memcached/blob/master/t/expirations.t
 memcachedExpirationTests :: Sandbox Test
