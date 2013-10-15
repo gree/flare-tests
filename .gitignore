@@ -1,5 +1,7 @@
-dist
-cabal-dev
+/cabal.sandbox.config
+/.cabal-sandbox/
+/cabal-dev/
+/dist/
 *.o
 *.hi
 *.chi
