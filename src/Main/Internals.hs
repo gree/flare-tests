@@ -7,6 +7,7 @@ module Main.Internals where
 import Test.Sandbox hiding (sendTo)
 import qualified Test.Sandbox (sendTo)
 import Test.Sandbox.HUnit
+import Test.Framework.Providers.Sandbox
 
 import Control.Monad
 import Data.List
@@ -115,6 +116,7 @@ getStat key fd = do
 
 setupFlareDaemon :: FlareDaemon -> Sandbox ()
 setupFlareDaemon fd = do
+  yieldProgress $ "Setting up " ++ fdId fd
   port <- getPort (fdId fd)
   let hpId = "localhost " ++ show port
   case fdRole fd of
@@ -129,5 +131,5 @@ setupFlareCluster :: Sandbox ()
 setupFlareCluster = withTimeout 1000 $ do
   daemons <- getVariable "daemons" [] :: Sandbox [FlareDaemon]
   mapM_ setupFlareDaemon daemons
-  _ <- liftIO $ putStrLn "Waiting 2 seconds for partition table to update..."
+  yieldProgress "Wait 2s"
   liftIO $ threadDelay 2000000
