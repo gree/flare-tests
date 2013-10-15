@@ -17,7 +17,7 @@ Executable flare-tests
                  , HUnit
                  , QuickCheck >= 2.5
                  , test-framework >= 0.8
-                 , test-framework-sandbox
+                 , test-framework-sandbox >= 0.0.2
                  , test-sandbox
                  , test-sandbox-hunit
                  , test-sandbox-quickcheck

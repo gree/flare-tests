@@ -18,27 +18,25 @@ import Data.Char
 import Text.Printf
 
 properties :: Test
-properties = sandboxTests "flare" $ do
-  setup
-  setupFlareCluster
-  sandboxTestGroup "properties" [
-      sandboxTestGroup "QuickCheck" [
-        sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
-                                                 v <- pick arbitrary :: PropertyM Sandbox String
-                                                 void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%s\r\n" k (length v) v) "STORED\r\n"
-                                                 void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
-      , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
-                                                  x <- pick $ arbitrary `suchThat` (>= 0) :: PropertyM Sandbox Int
-                                                  y <- pick $ arbitrary `suchThat` (\v -> x + v > x) :: PropertyM Sandbox Int
-                                                  void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%d\r\n" k (length $ show x) x) "STORED\r\n"
-                                                  void $ run $ assertSendToDaemon (printf "incr %s %d\r\n" k y) (printf "%d\r\n" (x + y))
-      ]
-    , sandboxTestGroup "partitioning" [
-        sandboxTest "repartition" $ do daemons <- getVariable "daemons" [] :: Sandbox [FlareDaemon]
-                                       items <- mapM (liftM read . getStat "curr_items" :: FlareDaemon -> Sandbox Int) daemons
-                                       let avg = fromIntegral (sum items) / fromIntegral (length items) :: Double
-                                           dev = max (fromIntegral (maximum items) - avg) (avg - fromIntegral (minimum items)) / avg
-                                       liftIO . putStrLn $ show items ++ " => Deviation: " ++ show dev
-                                       assertBool "deviation too large" (dev < 0.3)
-      ]
+properties = sandboxTests "properties" [
+    sandboxTest "setup" $ setup >> setupFlareCluster
+  , sandboxTestGroup "QuickCheck" [
+      sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
+                                               v <- pick arbitrary :: PropertyM Sandbox String
+                                               void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%s\r\n" k (length v) v) "STORED\r\n"
+                                               void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
+    , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
+                                                x <- pick $ arbitrary `suchThat` (>= 0) :: PropertyM Sandbox Int
+                                                y <- pick $ arbitrary `suchThat` (\v -> x + v > x) :: PropertyM Sandbox Int
+                                                void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%d\r\n" k (length $ show x) x) "STORED\r\n"
+                                                void $ run $ assertSendToDaemon (printf "incr %s %d\r\n" k y) (printf "%d\r\n" (x + y))
     ]
+  , sandboxTestGroup "partitioning" [
+      sandboxTest "repartition" $ do daemons <- getVariable "daemons" [] :: Sandbox [FlareDaemon]
+                                     items <- mapM (liftM read . getStat "curr_items" :: FlareDaemon -> Sandbox Int) daemons
+                                     let avg = fromIntegral (sum items) / fromIntegral (length items) :: Double
+                                         dev = max (fromIntegral (maximum items) - avg) (avg - fromIntegral (minimum items)) / avg
+                                     liftIO . putStrLn $ show items ++ " => Deviation: " ++ show dev
+                                     assertBool "deviation too large" (dev < 0.3)
+    ]
+  ]

@@ -19,8 +19,8 @@ failoverTests = do
     check = withTimeout 1000 $ do
       resp <- sendTo "flarei" "stats nodes\r\n"
       when (resp == "") $ assertFailure "flarei does not respond"
-  sandboxTests "failover" $ setup >> sandboxTestGroup "all" [
-      sandboxTest "1. flared setup" setupFlareCluster
+  sandboxTests "failover" [
+      sandboxTest "1. flared setup" $ setup >> setupFlareCluster
     , sandboxTest "2. stop" $ signal "flarei" sigSTOP
     , sandboxTest "3. kill" $ mapM_ (`signal` sigKILL) [ fdId (FlareDaemon 0 Master), fdId (FlareDaemon 0 $ Slave 0) ]
     , sandboxTest "4. wait 100ms" $ liftIO $ threadDelay 100000

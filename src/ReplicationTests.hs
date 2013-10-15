@@ -11,8 +11,8 @@ import Main.Internals
 import GHC.Conc
 
 replicationTests :: Test
-replicationTests = sandboxTests "flare" $ setup >> sandboxTestGroup "replication" [
-    sandboxTest "flared setup" setupFlareCluster
+replicationTests = sandboxTests "replication" [
+    sandboxTest "flared setup" $ setup >> setupFlareCluster
   , sandboxTest "1. expiration bug" expirationTest
   , sandboxTest "2. delete w/ expiration then CAS" deleteCASTest
   ]
