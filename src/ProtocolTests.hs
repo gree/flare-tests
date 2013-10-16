@@ -108,7 +108,7 @@ memcachedGetSetTests = sandboxTestGroup "memcached get/set tests" [
                                        \STORED\r\n\
                                        \DELETED\r\n\
                                        \STORED\r\n"
-  , sandboxTest "19. check" $ "get mgs:key_a" ~=> "VALUE mgs:key_a 0 0 7\r\nvalue_c\r\n" ]
+  , sandboxTest "19. check" $ "get mgs:key_a\r\n" ~=> "VALUE mgs:key_a 0 7\r\nvalue_c\r\nEND\r\n" ]
 
 -- https://github.com/memcached/memcached/blob/master/t/expirations.t
 memcachedExpirationTests :: Sandbox Test
