@@ -23,8 +23,10 @@ import Paths_flare_tests (getBinDir)
 setup :: Sandbox ()
 setup = do
   -- Register index server
-  binDir <- liftIO getBinDir
-  let flareiBin = binDir </> ".." </> ".." </> "flare" </> "src" </> "flarei" </> "flarei"
+  rootDir <- liftIO getFlareRoot
+  let flareiBin = case rootDir of
+                    Just v -> v </> "src" </> "flarei" </> "flarei"
+                    Nothing -> "/usr" </> "local" </> "bin" </> "flarei"
   dataDir <- getDataDir
   flareiPort <- getPort "flarei"
   register "flarei" flareiBin [ "--data-dir", dataDir
@@ -34,7 +36,10 @@ setup = do
                               , "--monitor-threshold", "2"
                               ] def
   -- Register daemons
-  setVariable "flared_bin" $ binDir </> ".." </> ".." </> "flare" </> "src" </> "flared" </> "flared"
+  let flaredBin = case rootDir of
+                    Just v -> v </> "src" </> "flared" </> "flared"
+                    Nothing -> "/usr" </> "local" </> "bin" </> "flared"
+  setVariable "flared_bin" flaredBin
   daemons <- setVariable "daemons" [ FlareDaemon 0 Master
                                    , FlareDaemon 0 (Slave 0)
                                    , FlareDaemon 0 (Slave 1)
@@ -133,3 +138,29 @@ setupFlareCluster = withTimeout 1000 $ do
   mapM_ setupFlareDaemon daemons
   yieldProgress "Wait 2s"
   liftIO $ threadDelay 2000000
+
+getFlareRoot :: IO (Maybe FilePath)
+getFlareRoot = do
+  binDir <- getBinDir
+  cs <- getRootCandidates
+  cs' <- filterM isFlareRoot cs
+  case cs' of
+    c:_ -> return $ Just (c </> "flare")
+    _ -> return Nothing
+
+getRootCandidates :: IO [FilePath]
+getRootCandidates = do
+  bindir <- getBinDir
+  cwd <- getCurrentDirectory
+  return [ cwd
+         , takeDirectories 2 bindir
+         , takeDirectories 3 bindir
+         ]
+
+isFlareRoot :: FilePath -> IO Bool
+isFlareRoot baseDir =
+  doesDirectoryExist $ baseDir </> "flare"
+
+takeDirectories :: Int -> FilePath -> FilePath
+takeDirectories n p =
+  if n <= 0 then p else iterate takeDirectory p !! (n - 1)
