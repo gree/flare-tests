@@ -7,3 +7,4 @@
 *.chi
 *.chs.h
 .virthualenv
+haskell-test-sandbox/
