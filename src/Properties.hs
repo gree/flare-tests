@@ -16,10 +16,11 @@ import Main.Internals
 import Control.Monad
 import Data.Char
 import Text.Printf
+import System.FilePath
 
-properties :: Test
-properties = sandboxTests "properties" [
-    sandboxTest "setup" $ setup >> setupFlareCluster
+properties :: Maybe FilePath -> Test
+properties binDir = sandboxTests "properties" [
+    sandboxTest "setup" $ (setupWithPath binDir) >> setupFlareCluster
   , sandboxTestGroup "QuickCheck" [
       sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
                                                v <- pick arbitrary :: PropertyM Sandbox String

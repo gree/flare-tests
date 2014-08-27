@@ -11,16 +11,17 @@ import Main.Internals
 
 import Control.Monad
 import GHC.Conc
+import System.FilePath
 import System.Posix.Signals
 
-failoverTests :: Test
-failoverTests = do
+failoverTests :: Maybe FilePath -> Test
+failoverTests binDir = do
   let
     check = withTimeout 1000 $ do
       resp <- sendTo "flarei" "stats nodes\r\n"
       when (resp == "") $ assertFailure "flarei does not respond"
   sandboxTests "failover" [
-      sandboxTest "1. flared setup" $ setup >> setupFlareCluster
+      sandboxTest "1. flared setup" $ (setupWithPath binDir) >> setupFlareCluster
     , sandboxTest "2. stop" $ signal "flarei" sigSTOP
     , sandboxTest "3. kill" $ mapM_ (`signal` sigKILL) [ fdId (FlareDaemon 0 Master), fdId (FlareDaemon 0 $ Slave 0) ]
     , sandboxTest "4. wait 100ms" $ liftIO $ threadDelay 100000

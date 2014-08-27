@@ -12,10 +12,11 @@ import Main.Internals
 import Control.Monad
 import Data.Time.Clock.POSIX
 import GHC.Conc
+import System.FilePath
 
-protocolTests :: Test
-protocolTests = sandboxTests "protocol" [
-    sandboxTest "setup" setup
+protocolTests :: Maybe FilePath -> Test
+protocolTests binDir = sandboxTests "protocol" [
+    sandboxTest "setup" (setupWithPath binDir)
   , preInitializationTests
   , sandboxTest "flared setup" setupFlareCluster
   , sandboxTestGroup "storage" [

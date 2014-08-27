@@ -9,10 +9,11 @@ import Test.Sandbox (Sandbox, liftIO)
 import Main.Internals
 
 import GHC.Conc
+import System.FilePath
 
-replicationTests :: Test
-replicationTests = sandboxTests "replication" [
-    sandboxTest "flared setup" $ setup >> setupFlareCluster
+replicationTests :: Maybe FilePath -> Test
+replicationTests binDir = sandboxTests "replication" [
+    sandboxTest "flared setup" $ (setupWithPath binDir) >> setupFlareCluster
   , sandboxTest "1. expiration bug" expirationTest
   , sandboxTest "2. delete w/ expiration then CAS" deleteCASTest
   ]
