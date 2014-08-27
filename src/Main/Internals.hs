@@ -21,12 +21,16 @@ import System.Random
 import Paths_flare_tests (getBinDir)
 
 setup :: Sandbox ()
-setup = do
+setup = setupWithPath Nothing
+
+setupWithPath :: Maybe FilePath -> Sandbox ()
+setupWithPath binDir = do
   -- Register index server
   rootDir <- liftIO getFlareRoot
-  let flareiBin = case rootDir of
-                    Just v -> v </> "src" </> "flarei" </> "flarei"
-                    Nothing -> "/usr" </> "local" </> "bin" </> "flarei"
+  let flareiBin = case (binDir, rootDir) of
+                    (Just v, _) -> v </> "flarei"
+                    (_, Just v) -> v </> "src" </> "flarei" </> "flarei"
+                    (_, Nothing) -> "/usr" </> "local" </> "bin" </> "flarei"
   dataDir <- getDataDir
   flareiPort <- getPort "flarei"
   register "flarei" flareiBin [ "--data-dir", dataDir
@@ -36,9 +40,10 @@ setup = do
                               , "--monitor-threshold", "2"
                               ] def
   -- Register daemons
-  let flaredBin = case rootDir of
-                    Just v -> v </> "src" </> "flared" </> "flared"
-                    Nothing -> "/usr" </> "local" </> "bin" </> "flared"
+  let flaredBin = case (binDir, rootDir) of
+                    (Just v, _) -> v </> "flared"
+                    (_, Just v) -> v </> "src" </> "flared" </> "flared"
+                    (_, Nothing) -> "/usr" </> "local" </> "bin" </> "flared"
   setVariable "flared_bin" flaredBin
   daemons <- setVariable "daemons" [ FlareDaemon 0 Master
                                    , FlareDaemon 0 (Slave 0)
