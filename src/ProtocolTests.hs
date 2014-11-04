@@ -4,7 +4,7 @@ module ProtocolTests (protocolTests) where
 
 import Test.Framework
 import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup')
-import Test.Sandbox (Sandbox, liftIO)
+import Test.Sandbox (Sandbox, liftIO, catchError)
 import Test.Sandbox.HUnit (assertEqual, assertException)
 
 import Main.Internals
@@ -28,6 +28,11 @@ protocolTests binDir = sandboxTests "protocol" [
     , memcachedTouchTests
     ]
   ]
+
+withRetry :: Int -> Sandbox a -> Sandbox a
+withRetry num action | num <= 1 = action
+withRetry num action | num > 1 =
+  action `catchError` (\_ -> withRetry (num - 1) action)
 
 (~=>) :: String -> String -> Sandbox ()
 i ~=> o = void $ assertSendToDaemon i o
@@ -113,7 +118,7 @@ memcachedGetSetTests = sandboxTestGroup "memcached get/set tests" [
 
 -- https://github.com/memcached/memcached/blob/master/t/expirations.t
 memcachedExpirationTests :: Sandbox Test
-memcachedExpirationTests = sandboxTestGroup "memcached expiration tests" [
+memcachedExpirationTests = withRetry 3 $ sandboxTestGroup "memcached expiration tests" [
     sandboxTest "1. set key_a (relative)" $ "set me:key_a 0 2 7\r\nvalue_a\r\n" ~=> "STORED\r\n"
   , sandboxTest "2. get key_a" $ "get me:key_a\r\n" ~=> "VALUE me:key_a 0 7\r\nvalue_a\r\nEND\r\n"
   , sandboxTest "3. wait 2.5s" $ liftIO $ threadDelay 2500000
@@ -128,10 +133,11 @@ memcachedExpirationTests = sandboxTestGroup "memcached expiration tests" [
   , sandboxTest "10. get key_a (expired)" $ "get me:key_a\r\n" ~=> "END\r\n"
   , sandboxTest "11. add key_b" $ "add me:key_b 0 2 7\r\nvalue_b\r\n" ~=> "STORED\r\n"
   , sandboxTest "12. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 7\r\nvalue_b\r\nEND\r\n"
-  , sandboxTest "13. add key_b (should fail)" $ "add me:key_b 0 2 10\r\nvalue_b_v2\r\n" ~=> "NOT_STORED\r\n"
+  , sandboxTest "13. add key_b (should fail)" $ "add me:key_b 0 0 10\r\nvalue_b_v2\r\n" ~=> "NOT_STORED\r\n"
   , sandboxTest "14. wait 2.5s" $ liftIO $ threadDelay 2500000
-  , sandboxTest "15. add key_b (should work)" $ "add me:key_b 0 2 10\r\nvalue_b_v3\r\n" ~=> "STORED\r\n"
-  , sandboxTest "16. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 10\r\nvalue_b_v3\r\nEND\r\n" ]
+  , sandboxTest "15. add key_b (should work)" $ "add me:key_b 0 0 10\r\nvalue_b_v3\r\n" ~=> "STORED\r\n"
+  , sandboxTest "16. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 10\r\nvalue_b_v3\r\nEND\r\n"
+  , sandboxTest "17. delete key_b" $ "delete me:key_b\r\n" ~=> "DELETED\r\n" ]
 
 -- https://github.com/memcached/memcached/blob/master/t/incrdecr.t
 memcachedIncrDecrTests :: Sandbox Test
