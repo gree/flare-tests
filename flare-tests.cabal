@@ -15,12 +15,12 @@ Executable flare-tests
                  , random
                  , time
                  , HUnit
-                 , QuickCheck >= 2.5
-                 , test-framework >= 0.8
-                 , test-framework-sandbox >= 0.0.2
+                 , QuickCheck              >= 2.5
+                 , test-framework          >= 0.8
+                 , test-framework-sandbox  >= 0.0.2
                  , test-sandbox
                  , test-sandbox-hunit
-                 , test-sandbox-quickcheck
+                 , test-sandbox-quickcheck >= 0.0.1.6
                  , unix
   Hs-Source-Dirs:  src
   Main-Is:         Main.hs
