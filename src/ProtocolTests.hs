@@ -127,10 +127,11 @@ memcachedExpirationTests = sandboxTestGroup "memcached expiration tests" [
   , sandboxTest "10. get key_a (expired)" $ "get me:key_a\r\n" ~=> "END\r\n"
   , sandboxTest "11. add key_b" $ "add me:key_b 0 2 7\r\nvalue_b\r\n" ~=> "STORED\r\n"
   , sandboxTest "12. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 7\r\nvalue_b\r\nEND\r\n"
-  , sandboxTest "13. add key_b (should fail)" $ "add me:key_b 0 2 10\r\nvalue_b_v2\r\n" ~=> "NOT_STORED\r\n"
+  , sandboxTest "13. add key_b (should fail)" $ "add me:key_b 0 0 10\r\nvalue_b_v2\r\n" ~=> "NOT_STORED\r\n"
   , sandboxTest "14. wait 2.5s" $ liftIO $ threadDelay 2500000
-  , sandboxTest "15. add key_b (should work)" $ "add me:key_b 0 2 10\r\nvalue_b_v3\r\n" ~=> "STORED\r\n"
-  , sandboxTest "16. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 10\r\nvalue_b_v3\r\nEND\r\n" ]
+  , sandboxTest "15. add key_b (should work)" $ "add me:key_b 0 0 10\r\nvalue_b_v3\r\n" ~=> "STORED\r\n"
+  , sandboxTest "16. get key_b" $ "get me:key_b\r\n" ~=> "VALUE me:key_b 0 10\r\nvalue_b_v3\r\nEND\r\n"
+  , sandboxTest "17. delete key_b" $ "delete me:key_b\r\n" ~=> "DELETED\r\n" ]
 
 -- https://github.com/memcached/memcached/blob/master/t/incrdecr.t
 memcachedIncrDecrTests :: Sandbox Test
