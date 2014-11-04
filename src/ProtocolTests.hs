@@ -4,7 +4,7 @@ module ProtocolTests (protocolTests) where
 
 import Test.Framework
 import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup')
-import Test.Sandbox (Sandbox, liftIO)
+import Test.Sandbox (Sandbox, liftIO, catchError)
 import Test.Sandbox.HUnit (assertEqual, assertException)
 
 import Main.Internals
@@ -27,6 +27,11 @@ protocolTests = sandboxTests "protocol" [
     , memcachedTouchTests
     ]
   ]
+
+withRetry :: Int -> Sandbox a -> Sandbox a
+withRetry num action | num <= 1 = action
+withRetry num action | num > 1 =
+  action `catchError` (\_ -> withRetry (num - 1) action)
 
 (~=>) :: String -> String -> Sandbox ()
 i ~=> o = void $ assertSendToDaemon i o
@@ -112,7 +117,7 @@ memcachedGetSetTests = sandboxTestGroup "memcached get/set tests" [
 
 -- https://github.com/memcached/memcached/blob/master/t/expirations.t
 memcachedExpirationTests :: Sandbox Test
-memcachedExpirationTests = sandboxTestGroup "memcached expiration tests" [
+memcachedExpirationTests = withRetry 3 $ sandboxTestGroup "memcached expiration tests" [
     sandboxTest "1. set key_a (relative)" $ "set me:key_a 0 2 7\r\nvalue_a\r\n" ~=> "STORED\r\n"
   , sandboxTest "2. get key_a" $ "get me:key_a\r\n" ~=> "VALUE me:key_a 0 7\r\nvalue_a\r\nEND\r\n"
   , sandboxTest "3. wait 2.5s" $ liftIO $ threadDelay 2500000
