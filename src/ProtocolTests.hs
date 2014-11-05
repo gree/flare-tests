@@ -3,7 +3,7 @@
 module ProtocolTests (protocolTests) where
 
 import Test.Framework
-import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup')
+import Test.Framework.Providers.Sandbox (sandboxTests, sandboxTest, sandboxTestGroup, sandboxTestGroup', withRetry)
 import Test.Sandbox (Sandbox, liftIO, catchError)
 import Test.Sandbox.HUnit (assertEqual, assertException)
 
@@ -28,11 +28,6 @@ protocolTests binDir = sandboxTests "protocol" [
     , memcachedTouchTests
     ]
   ]
-
-withRetry :: Int -> Sandbox a -> Sandbox a
-withRetry num action | num <= 1 = action
-withRetry num action | num > 1 =
-  action `catchError` (\_ -> withRetry (num - 1) action)
 
 (~=>) :: String -> String -> Sandbox ()
 i ~=> o = void $ assertSendToDaemon i o
