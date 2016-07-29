@@ -34,7 +34,7 @@ setupWithPath binDir prefix = do
   dataDir <- getDataDir
   flareiPort <- getPort "flarei"
   register "flarei" flareiBin [ "--data-dir", dataDir
-                              , "--server-name", "localhost"
+                              , "--server-name", "0.0.0.0"
                               , "--server-port", show flareiPort
                               , "--monitor-interval", "1"
                               , "--monitor-threshold", "2"
@@ -84,10 +84,10 @@ registerDaemon fd prefix = do
   flareiPort <- getPort "flarei"
   port <- getPort (fdId fd)
   void $ register (fdId fd) bin [ "--data-dir", dir
-                                , "--index-server-name", "localhost"
+                                , "--index-server-name", "0.0.0.0"
                                 , "--index-server-port", show flareiPort
                                 , "--replication-type", "sync"
-                                , "--server-name", "localhost"
+                                , "--server-name", "0.0.0.0"
                                 , "--server-port", show port
                                 ] def { psWait = Nothing , psCapture=Just (CaptureBothWithFile (prefix ++ "_flared_out.txt") (prefix ++ "_flared_err.txt"))}
 
@@ -128,7 +128,7 @@ setupFlareDaemon :: FlareDaemon -> Sandbox ()
 setupFlareDaemon fd = do
   yieldProgress $ "Setting up " ++ fdId fd
   port <- getPort (fdId fd)
-  let hpId = "localhost " ++ show port
+  let hpId = "0.0.0.0 " ++ show port
   case fdRole fd of
     Master -> void $ assertSendTo "flarei" ("node role " ++ hpId ++ " master 1 " ++ show (fdPartition fd) ++ "\r\n") "OK\r\n"
     Slave _ -> void $ assertSendTo "flarei" ("node role " ++ hpId ++ " slave 0 " ++ show (fdPartition fd) ++ "\r\n") "OK\r\n"
