@@ -16,7 +16,7 @@ import System.FilePath
 
 protocolTests :: Maybe FilePath -> Test
 protocolTests binDir = sandboxTests "protocol" [
-    sandboxTest "setup" (setupWithPath binDir)
+    sandboxTest "setup" (setupWithPath binDir "protocol")
   , preInitializationTests
   , sandboxTest "flared setup" setupFlareCluster
   , sandboxTestGroup "storage" [

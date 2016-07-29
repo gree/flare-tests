@@ -13,7 +13,7 @@ import System.FilePath
 
 replicationTests :: Maybe FilePath -> Test
 replicationTests binDir = sandboxTests "replication" [
-    sandboxTest "flared setup" $ (setupWithPath binDir) >> setupFlareCluster
+    sandboxTest "flared setup" $ (setupWithPath binDir "replicationTest") >> setupFlareCluster
   , sandboxTest "1. expiration bug" expirationTest
   , sandboxTest "2. delete w/ expiration then CAS" deleteCASTest
   ]

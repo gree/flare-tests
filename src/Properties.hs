@@ -20,7 +20,7 @@ import System.FilePath
 
 properties :: Maybe FilePath -> Test
 properties binDir = sandboxTests "properties" [
-    sandboxTest "setup" $ (setupWithPath binDir) >> setupFlareCluster
+    sandboxTest "setup" $ (setupWithPath binDir "properties") >> setupFlareCluster
   , sandboxTestGroup "QuickCheck" [
       sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
                                                v <- pick arbitrary :: PropertyM Sandbox String

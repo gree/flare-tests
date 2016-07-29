@@ -1,0 +1,8 @@
+resolver: lts-6.9
+packages: 
+- .
+extra-deps:
+- test-framework-sandbox-0.1.0
+- test-sandbox-0.1.5
+- test-sandbox-hunit-0.1.2
+- test-sandbox-quickcheck-0.1.0
