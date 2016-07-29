@@ -20,11 +20,11 @@ import System.Random
 
 import Paths_flare_tests (getBinDir)
 
-setup :: Sandbox ()
-setup = setupWithPath Nothing
+setup :: String -> Sandbox ()
+setup prefix = setupWithPath Nothing prefix
 
-setupWithPath :: Maybe FilePath -> Sandbox ()
-setupWithPath binDir = do
+setupWithPath :: Maybe FilePath -> String -> Sandbox ()
+setupWithPath binDir prefix = do
   -- Register index server
   rootDir <- liftIO getFlareRoot
   let flareiBin = case (binDir, rootDir) of
@@ -38,7 +38,7 @@ setupWithPath binDir = do
                               , "--server-port", show flareiPort
                               , "--monitor-interval", "1"
                               , "--monitor-threshold", "2"
-                              ] def
+                              ] (def {psCapture=Just (CaptureBothWithFile (prefix ++ "_flarei_out.txt") (prefix ++ "_flarei_err.txt"))})
   -- Register daemons
   let flaredBin = case (binDir, rootDir) of
                     (Just v, _) -> v </> "flared"
@@ -54,7 +54,7 @@ setupWithPath binDir = do
                                    , FlareDaemon 2 Master
                                    , FlareDaemon 2 (Slave 0)
                                    , FlareDaemon 2 (Slave 1) ]
-  mapM_ registerDaemon daemons
+  mapM_ (\daemon -> registerDaemon daemon (prefix ++ "_" ++ show daemon)) daemons
   startAll
   liftIO $ threadDelay 1000000
 
@@ -76,8 +76,8 @@ fdId fd = case fdRole fd of
   Master -> "Partition_" ++ show (fdPartition fd) ++ "_Master"
   Slave i -> "Partition_" ++ show (fdPartition fd) ++ "_Slave_" ++ show i
 
-registerDaemon :: FlareDaemon -> Sandbox ()
-registerDaemon fd = do
+registerDaemon :: FlareDaemon -> String -> Sandbox ()
+registerDaemon fd prefix = do
   dir <- getDataDir >>= (\d -> return $ d </> fdId fd)
   liftIO $ createDirectory dir
   bin <- getVariable "flared_bin" "flared"
@@ -89,7 +89,7 @@ registerDaemon fd = do
                                 , "--replication-type", "sync"
                                 , "--server-name", "localhost"
                                 , "--server-port", show port
-                                ] def { psWait = Nothing }
+                                ] def { psWait = Nothing , psCapture=Just (CaptureBothWithFile (prefix ++ "_flared_out.txt") (prefix ++ "_flared_err.txt"))}
 
 normalize :: String -> String
 normalize = unlines . sort . lines

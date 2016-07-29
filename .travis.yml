@@ -20,4 +20,5 @@ script:
   - cabal install
   - (cd flare && ./autogen.sh && ./configure && make && sudo make install)
   - flare-tests
-
+  - for i in *.txt ; do echo --- "$i"  --- ; cat "$i" ;done
+  - sudo cat /var/log/syslog
