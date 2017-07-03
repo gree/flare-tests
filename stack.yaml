@@ -1,0 +1,18 @@
+resolver: lts-7.20
+
+packages:
+- '.'
+# Dependency packages to be pulled from upstream that are not in the resolver
+# (e.g., acme-missiles-0.3)
+extra-deps:
+- test-framework-sandbox-0.1.1
+- test-sandbox-0.1.7
+- test-sandbox-hunit-0.1.2
+- test-sandbox-quickcheck-0.1.0
+
+# Override default flag values for local packages and extra-deps
+flags: {}
+
+# Extra package databases containing global packages
+extra-package-dbs: []
+
