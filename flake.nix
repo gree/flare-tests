@@ -2,7 +2,7 @@
   description = "flare-tests";
 
   nixConfig = {
-    bash-prompt = "\[\\e[1m\\e[32mdev-flare\\e[0m:\\w\]$ ";
+    bash-prompt = "\[\\e[1m\\e[32mdev-flare-tests\\e[0m:\\w\]$ ";
   };
 
   inputs = {
