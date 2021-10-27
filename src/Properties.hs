@@ -18,15 +18,18 @@ import Data.Char
 import Text.Printf
 import System.FilePath
 
+isAlphaNum' :: Char -> Bool
+isAlphaNum' c = isAlphaNum c && isAscii c
+
 properties :: Maybe FilePath -> Test
 properties binDir = sandboxTests "properties" [
     sandboxTest "setup" $ (setupWithPath binDir) >> setupFlareCluster
   , sandboxTestGroup "QuickCheck" [
-      sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
+      sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum' s) :: PropertyM Sandbox String
                                                v <- pick arbitrary :: PropertyM Sandbox String
                                                void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%s\r\n" k (length v) v) "STORED\r\n"
                                                void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
-    , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum s) :: PropertyM Sandbox String
+    , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum' s) :: PropertyM Sandbox String
                                                 x <- pick $ arbitrary `suchThat` (>= 0) :: PropertyM Sandbox Int
                                                 y <- pick $ arbitrary `suchThat` (\v -> x + v > x) :: PropertyM Sandbox Int
                                                 void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%d\r\n" k (length $ show x) x) "STORED\r\n"
