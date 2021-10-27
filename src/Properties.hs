@@ -26,7 +26,7 @@ properties binDir = sandboxTests "properties" [
     sandboxTest "setup" $ (setupWithPath binDir) >> setupFlareCluster
   , sandboxTestGroup "QuickCheck" [
       sandboxTest "set->get" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum' s) :: PropertyM Sandbox String
-                                               v <- pick arbitrary :: PropertyM Sandbox String
+                                               v <- pick $ arbitrary `suchThat` (\s -> not (null s) && all (\c -> ord c < 256) s) :: PropertyM Sandbox String
                                                void $ run $ assertSendToDaemon (printf "set %s 0 0 %d\r\n%s\r\n" k (length v) v) "STORED\r\n"
                                                void $ run $ assertSendToDaemon (printf "get %s\r\n" k) (printf "VALUE %s 0 %d\r\n%s\r\nEND\r\n" k (length v) v)
     , sandboxTest "set->incr" $ quickCheck $ do k <- pick $ arbitrary `suchThat` (\s -> not (null s) && all isAlphaNum' s) :: PropertyM Sandbox String
