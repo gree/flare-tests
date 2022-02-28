@@ -6,6 +6,7 @@ import FailoverTests (failoverTests)
 import ProtocolTests (protocolTests)
 import Properties (properties)
 import ReplicationTests (replicationTests)
+import ClusterReplicationTests (clusterReplicationTests)
 import Options
 
 import System.Console.CmdArgs
@@ -16,6 +17,7 @@ main = do
   options <- cmdArgs defaultOptions
   let binDir = flare_bin_dir options
   defaultMainWithArgs [ (failoverTests binDir)
-                        , (protocolTests binDir)
-                        , (properties binDir)
-                        , (replicationTests binDir) ] []
+                      , (protocolTests binDir)
+                      , (properties binDir)
+                      , (replicationTests binDir)
+                      , (clusterReplicationTests binDir) ] []
